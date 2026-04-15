@@ -1,0 +1,27 @@
+@webApi_HostAddress = http://localhost:5062
+
+GET {{webApi_HostAddress}}/weatherforecast/
+Accept: application/json
+
+### add
+# POST http://localhost:5062/api/todos
+# Content-Type: application/json
+
+# {
+#   "title": "Learn CRUD",
+#   "isComplete": false
+# }
+
+### update
+# PUT http://localhost:5062/api/todos/1
+# Content-Type: application/json
+
+# {
+#   "id": 1,
+#   "title": "Finish backend setup updated",
+#   "isComplete": true
+# }
+
+## delete
+#DELETE http://localhost:5062/api/todos/2
+
