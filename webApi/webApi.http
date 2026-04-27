@@ -25,3 +25,6 @@ Accept: application/json
 ## delete
 #DELETE http://localhost:5062/api/todos/2
 
+### get all todos with labels
+#GET {{webApi_HostAddress}}/api/todos
+#Accept: application/json
