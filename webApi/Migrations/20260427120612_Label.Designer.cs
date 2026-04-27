@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using webApi.Data;
 
@@ -10,9 +11,11 @@ using webApi.Data;
 namespace webApi.Migrations
 {
     [DbContext(typeof(TaskDbContext))]
-    partial class TaskDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260427120612_Label")]
+    partial class Label
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -91,14 +94,14 @@ namespace webApi.Migrations
                             Id = 1,
                             IsComplete = false,
                             LabelId = 1,
-                            Title = "Learn fronted"
+                            Title = "Buy groceries"
                         },
                         new
                         {
                             Id = 2,
                             IsComplete = true,
                             LabelId = 1,
-                            Title = "learn backend"
+                            Title = "Walk the dog"
                         },
                         new
                         {

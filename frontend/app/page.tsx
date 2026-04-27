@@ -2,28 +2,52 @@
 
 import { useEffect, useState } from "react";
 
+type Label = {
+  id: number;
+  name: string;
+  description?: string | null;
+  color: string;
+};
+
 type TaskItem = {
   id: number;
   title: string;
   isComplete: boolean;
+  labelId?: number | null;
+  label?: Label | null;
 };
 
-const API_URL = "http://localhost:5062/api/todos";
+const TODOS_API_URL = "http://localhost:5062/api/todos";
+const LABELS_API_URL = "http://localhost:5062/api/labels";
 
 export default function HomePage() {
   const [todos, setTodos] = useState<TaskItem[]>([]);
+  const [labels, setLabels] = useState<Label[]>([]);
   const [newTitle, setNewTitle] = useState("");
+  const [newLabelId, setNewLabelId] = useState<string>("");
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editingTitle, setEditingTitle] = useState("");
+  const [editingLabelId, setEditingLabelId] = useState<string>("");
   const [loading, setLoading] = useState(true);
 
   async function fetchTodos() {
+    const res = await fetch(TODOS_API_URL, { cache: "no-store" });
+    if (!res.ok) throw new Error("Failed to fetch todos");
+    const data = await res.json();
+    setTodos(data);
+  }
+
+  async function fetchLabels() {
+    const res = await fetch(LABELS_API_URL, { cache: "no-store" });
+    if (!res.ok) throw new Error("Failed to fetch labels");
+    const data = await res.json();
+    setLabels(data);
+  }
+
+  async function refreshData() {
     try {
       setLoading(true);
-      const res = await fetch(API_URL, { cache: "no-store" });
-      if (!res.ok) throw new Error("Failed to fetch todos");
-      const data = await res.json();
-      setTodos(data);
+      await Promise.all([fetchTodos(), fetchLabels()]);
     } catch (error) {
       console.error(error);
     } finally {
@@ -32,7 +56,18 @@ export default function HomePage() {
   }
 
   useEffect(() => {
-    fetchTodos();
+    async function loadInitialData() {
+      try {
+        setLoading(true);
+        await Promise.all([fetchTodos(), fetchLabels()]);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadInitialData();
   }, []);
 
   async function handleAddTodo() {
@@ -40,7 +75,7 @@ export default function HomePage() {
     if (!title) return;
 
     try {
-      const res = await fetch(API_URL, {
+      const res = await fetch(TODOS_API_URL, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -48,13 +83,15 @@ export default function HomePage() {
         body: JSON.stringify({
           title,
           isComplete: false,
+          labelId: newLabelId ? Number(newLabelId) : null,
         }),
       });
 
       if (!res.ok) throw new Error("Failed to add todo");
 
       setNewTitle("");
-      fetchTodos();
+      setNewLabelId("");
+      refreshData();
     } catch (error) {
       console.error(error);
     }
@@ -62,13 +99,13 @@ export default function HomePage() {
 
   async function handleDeleteTodo(id: number) {
     try {
-      const res = await fetch(`${API_URL}/${id}`, {
+      const res = await fetch(`${TODOS_API_URL}/${id}`, {
         method: "DELETE",
       });
 
       if (!res.ok) throw new Error("Failed to delete todo");
 
-      fetchTodos();
+      refreshData();
     } catch (error) {
       console.error(error);
     }
@@ -77,11 +114,13 @@ export default function HomePage() {
   function startEditing(todo: TaskItem) {
     setEditingId(todo.id);
     setEditingTitle(todo.title);
+    setEditingLabelId(todo.labelId ? String(todo.labelId) : "");
   }
 
   function cancelEditing() {
     setEditingId(null);
     setEditingTitle("");
+    setEditingLabelId("");
   }
 
   async function handleUpdateTodo(todo: TaskItem) {
@@ -89,7 +128,7 @@ export default function HomePage() {
     if (!title) return;
 
     try {
-      const res = await fetch(`${API_URL}/${todo.id}`, {
+      const res = await fetch(`${TODOS_API_URL}/${todo.id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -98,13 +137,14 @@ export default function HomePage() {
           id: todo.id,
           title,
           isComplete: todo.isComplete,
+          labelId: editingLabelId ? Number(editingLabelId) : null,
         }),
       });
 
       if (!res.ok) throw new Error("Failed to update todo");
 
       cancelEditing();
-      fetchTodos();
+      refreshData();
     } catch (error) {
       console.error(error);
     }
@@ -112,7 +152,7 @@ export default function HomePage() {
 
   async function handleToggleComplete(todo: TaskItem) {
     try {
-      const res = await fetch(`${API_URL}/${todo.id}`, {
+      const res = await fetch(`${TODOS_API_URL}/${todo.id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -121,12 +161,13 @@ export default function HomePage() {
           id: todo.id,
           title: todo.title,
           isComplete: !todo.isComplete,
+          labelId: todo.labelId ?? null,
         }),
       });
 
       if (!res.ok) throw new Error("Failed to update status");
 
-      fetchTodos();
+      refreshData();
     } catch (error) {
       console.error(error);
     }
@@ -163,6 +204,7 @@ export default function HomePage() {
         <div
           style={{
             display: "flex",
+            flexWrap: "wrap",
             gap: "12px",
             justifyContent: "center",
             marginBottom: "32px",
@@ -181,6 +223,24 @@ export default function HomePage() {
               border: "1px solid #ccc",
             }}
           />
+          <select
+            value={newLabelId}
+            onChange={(e) => setNewLabelId(e.target.value)}
+            style={{
+              padding: "12px 16px",
+              fontSize: "18px",
+              borderRadius: "10px",
+              border: "1px solid #ccc",
+              backgroundColor: "#fff",
+            }}
+          >
+            <option value="">No label</option>
+            {labels.map((label) => (
+              <option key={label.id} value={label.id}>
+                {label.name}
+              </option>
+            ))}
+          </select>
           <button
             onClick={handleAddTodo}
             style={{
@@ -238,6 +298,25 @@ export default function HomePage() {
                         border: "1px solid #ccc",
                       }}
                     />
+                    <select
+                      value={editingLabelId}
+                      onChange={(e) => setEditingLabelId(e.target.value)}
+                      style={{
+                        width: "300px",
+                        padding: "10px 14px",
+                        fontSize: "18px",
+                        borderRadius: "10px",
+                        border: "1px solid #ccc",
+                        backgroundColor: "#fff",
+                      }}
+                    >
+                      <option value="">No label</option>
+                      {labels.map((label) => (
+                        <option key={label.id} value={label.id}>
+                          {label.name}
+                        </option>
+                      ))}
+                    </select>
                     <div style={{ display: "flex", gap: "10px" }}>
                       <button onClick={() => handleUpdateTodo(todo)}>Save</button>
                       <button onClick={cancelEditing}>Cancel</button>
@@ -255,7 +334,7 @@ export default function HomePage() {
                     <div
                       style={{
                         display: "flex",
-                        alignItems: "center",
+                        alignItems: "flex-start",
                         gap: "12px",
                         textAlign: "left",
                         flex: 1,
@@ -274,16 +353,40 @@ export default function HomePage() {
                         {todo.isComplete ? "✓" : "✗"}
                       </button>
 
-                      <span
+                      <div
                         style={{
-                          fontSize: "28px",
-                          fontWeight: 700,
-                          textDecoration: todo.isComplete ? "line-through" : "none",
-                          opacity: todo.isComplete ? 0.7 : 1,
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: "8px",
                         }}
                       >
-                        {todo.title}
-                      </span>
+                        <span
+                          style={{
+                            fontSize: "28px",
+                            fontWeight: 700,
+                            textDecoration: todo.isComplete ? "line-through" : "none",
+                            opacity: todo.isComplete ? 0.7 : 1,
+                          }}
+                        >
+                          {todo.title}
+                        </span>
+
+                        {todo.label && (
+                          <span
+                            style={{
+                              alignSelf: "flex-start",
+                              padding: "4px 10px",
+                              borderRadius: "999px",
+                              backgroundColor: todo.label.color,
+                              color: "#fff",
+                              fontSize: "14px",
+                              fontWeight: 600,
+                            }}
+                          >
+                            {todo.label.name}
+                          </span>
+                        )}
+                      </div>
                     </div>
 
                     <div style={{ display: "flex", gap: "10px" }}>
