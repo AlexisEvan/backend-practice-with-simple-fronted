@@ -19,14 +19,19 @@ namespace webApi.Controllers
         [HttpGet]
         public async Task<ActionResult<List<TaskItem>>> GetTodos()
         {
-            var todos = await _context.TaskItems.ToListAsync();
+            var todos = await _context.TaskItems
+                .Include(t => t.Label)
+                .ToListAsync();
+
             return Ok(todos);
         }
 
         [HttpGet("{id}")]
         public async Task<ActionResult<TaskItem>> GetTodoById(int id)
         {
-            var task = await _context.TaskItems.FindAsync(id);
+            var task = await _context.TaskItems
+                .Include(t => t.Label)
+                .FirstOrDefaultAsync(t => t.Id == id);
 
             if (task == null)
             {
@@ -57,6 +62,7 @@ namespace webApi.Controllers
 
             existingTask.Title = updatedTask.Title;
             existingTask.IsComplete = updatedTask.IsComplete;
+            existingTask.LabelId = updatedTask.LabelId;
 
             await _context.SaveChangesAsync();
 

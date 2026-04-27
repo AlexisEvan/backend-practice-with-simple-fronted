@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using webApi.Data;
 
@@ -10,9 +11,11 @@ using webApi.Data;
 namespace webApi.Migrations
 {
     [DbContext(typeof(TaskDbContext))]
-    partial class TaskDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260427070310_AddLabelRelationship")]
+    partial class AddLabelRelationship
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -43,22 +46,6 @@ namespace webApi.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Labels");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            Color = "#3B82F6",
-                            Description = "Personal tasks",
-                            Name = "Personal"
-                        },
-                        new
-                        {
-                            Id = 2,
-                            Color = "#10B981",
-                            Description = "Work tasks",
-                            Name = "Work"
-                        });
                 });
 
             modelBuilder.Entity("webApi.Models.TaskItem", b =>
@@ -90,22 +77,13 @@ namespace webApi.Migrations
                         {
                             Id = 1,
                             IsComplete = false,
-                            LabelId = 1,
-                            Title = "Learn fronted"
+                            Title = "Buy groceries"
                         },
                         new
                         {
                             Id = 2,
                             IsComplete = true,
-                            LabelId = 1,
-                            Title = "learn backend"
-                        },
-                        new
-                        {
-                            Id = 3,
-                            IsComplete = false,
-                            LabelId = 2,
-                            Title = "Finish report"
+                            Title = "Walk the dog"
                         });
                 });
 
